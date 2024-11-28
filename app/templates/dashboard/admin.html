@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Proposals</h5>
+                    <h2>{{ stats.total_proposals }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Approval</h5>
+                    <h2>{{ stats.pending_approval }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Approved</h5>
+                    <h2>{{ stats.approved }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Rejected</h5>
+                    <h2>{{ stats.rejected }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Proposals -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Proposals</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Department</th>
+                                    <th>Status</th>
+                                    <th>Submitted By</th>
+                                    <th>Current Stage</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for proposal in proposals %}
+                                <tr>
+                                    <td>{{ proposal.id }}</td>
+                                    <td>{{ proposal.title }}</td>
+                                    <td>{{ proposal.department }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if proposal.status == 'approved' 
+                                                            else 'danger' if proposal.status == 'rejected' 
+                                                            else 'warning' }}">
+                                            {{ proposal.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ proposal.user.username }}</td>
+                                    <td>{{ proposal.workflow[0].current_stage.name if proposal.workflow else 'Not Started' }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('proposal.view', id=proposal.id) }}" 
+                                               class="btn btn-sm btn-primary">View</a>
+                                            <button type="button" class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown"></button>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="{{ url_for('proposal.edit', id=proposal.id) }}">Edit</a>
+                                                <a class="dropdown-item" href="{{ url_for('workflow.history', id=proposal.id) }}">History</a>
+                                                <div class="dropdown-divider"></div>
+                                                <form action="{{ url_for('proposal.delete', id=proposal.id) }}" method="POST" 
+                                                      onsubmit="return confirm('Are you sure?');">
+                                                    <button type="submit" class="dropdown-item text-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">System Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Database Status</label>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: 100%">Connected</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email Service</label>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: 100%">Active</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Storage</label>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" style="width: 45%">45% Used</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-primary">Manage Users</a>
+                        <a href="{{ url_for('admin.roles') }}" class="btn btn-secondary">Manage Roles</a>
+                        <a href="{{ url_for('reports.index') }}" class="btn btn-info">Generate Reports</a>
+                        <a href="{{ url_for('admin.settings') }}" class="btn btn-warning">System Settings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Refresh stats every 5 minutes
+    setInterval(function() {
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update stats
+                document.querySelector('#total-proposals').textContent = data.total_proposals;
+                document.querySelector('#pending-approval').textContent = data.pending_approval;
+                document.querySelector('#approved').textContent = data.approved;
+                document.querySelector('#rejected').textContent = data.rejected;
+            });
+    }, 300000);
+</script>
+{% endblock %} 

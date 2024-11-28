@@ -1,0 +1,77 @@
+.document-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.document-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.document-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.document-icon {
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.document-details {
+    padding: 15px;
+    background: #fff;
+    border-radius: 6px;
+}
+
+.version-history {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.version-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.dropzone {
+    border: 2px dashed #0087F7;
+    border-radius: 5px;
+    background: white;
+    min-height: 150px;
+    padding: 20px;
+    position: relative;
+}
+
+.dropzone:hover {
+    border-color: #0056b3;
+}
+
+.preview-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow: auto;
+} 

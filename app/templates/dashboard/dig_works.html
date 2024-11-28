@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}DIG(Works) Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, DIG(Works)</h4>
+                    <p class="card-text">Department: {{ current_user.department }}</p>
+                    <p class="card-text">Role: {{ current_user.role.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Review</h5>
+                    <h2>{{ stats.pending_review }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Approved Today</h5>
+                    <h2>{{ stats.approved_today }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Forwarded to SE</h5>
+                    <h2>{{ stats.forwarded_to_se }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Minor Works</h5>
+                    <h2>{{ stats.minor_works }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Proposals -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Pending Proposals</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>File No.</th>
+                                    <th>Title</th>
+                                    <th>Department</th>
+                                    <th>Received Date</th>
+                                    <th>Priority</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for proposal in pending_proposals %}
+                                <tr>
+                                    <td>{{ proposal.file_number }}</td>
+                                    <td>{{ proposal.title }}</td>
+                                    <td>{{ proposal.department }}</td>
+                                    <td>{{ proposal.received_at|date }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ proposal.priority_color }}">
+                                            {{ proposal.priority }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('proposal.review', id=proposal.id) }}" 
+                                               class="btn btn-sm btn-primary">Review</a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown"></button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('proposal.forward_se', id=proposal.id) }}">
+                                                        Forward to SE
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('proposal.forward_adg', id=proposal.id) }}">
+                                                        Forward to ADG
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('proposal.return', id=proposal.id) }}">
+                                                        Return Proposal
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Actions -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for action in recent_actions %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ action.title }}</h6>
+                                <small>{{ action.timestamp|timeago }}</small>
+                            </div>
+                            <p class="mb-1">{{ action.description }}</p>
+                            <small>File: {{ action.file_number }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Important Notices</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for notice in notices %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ notice.title }}</h6>
+                                <small class="text-danger">{{ notice.date|date }}</small>
+                            </div>
+                            <p class="mb-1">{{ notice.content }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Refresh data every 5 minutes
+    setInterval(function() {
+        fetch('/api/dig/stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update statistics
+                document.querySelector('.pending-review').textContent = data.pending_review;
+                document.querySelector('.approved-today').textContent = data.approved_today;
+                document.querySelector('.forwarded-se').textContent = data.forwarded_to_se;
+                document.querySelector('.minor-works').textContent = data.minor_works;
+            });
+    }, 300000);
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+</script>
+{% endblock %} 

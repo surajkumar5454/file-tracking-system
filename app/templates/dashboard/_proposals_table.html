@@ -1,0 +1,74 @@
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>File Number</th>
+                <th>Title</th>
+                <th>Department</th>
+                <th>Estimated Cost</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Current Location</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proposal in direct_proposals %}
+            <tr>
+                <td>{{ proposal.file_number }}</td>
+                <td>{{ proposal.title }}</td>
+                <td>{{ proposal.department }}</td>
+                <td>₹{{ "%.2f"|format(proposal.estimated_cost) }}</td>
+                <td>
+                    <span class="badge bg-{{ 'success' if proposal.current_status == 'approved' 
+                                        else 'danger' if proposal.current_status == 'rejected'
+                                        else 'warning' }}">
+                        {{ proposal.current_status }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-{{ 'danger' if proposal.priority == 'urgent' 
+                                        else 'warning' if proposal.priority == 'high' 
+                                        else 'info' }}">
+                        {{ proposal.priority }}
+                    </span>
+                </td>
+                <td>{{ proposal.current_location }}</td>
+                <td>
+                    <div class="btn-group">
+                        {% if proposal.current_location == current_user.role.name and proposal.current_status == 'pending_approval' %}
+                            <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                Actions
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" 
+                                       data-bs-target="#approveModal{{ proposal.id }}">
+                                        Approve
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" 
+                                       data-bs-target="#rejectModal{{ proposal.id }}">
+                                        Reject
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" 
+                                       data-bs-target="#forwardModal{{ proposal.id }}">
+                                        Forward
+                                    </a>
+                                </li>
+                            </ul>
+                        {% endif %}
+                        <a href="{{ url_for('main.track_file', file_number=proposal.file_number) }}" 
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-history"></i> Track
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div> 

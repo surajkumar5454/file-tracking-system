@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Sector Officer Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, {{ current_user.username }}</h4>
+                    <p class="card-text">Department: {{ current_user.department }}</p>
+                    <p class="card-text">Designation: {{ current_user.designation }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('proposal.new_proposal') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> New Proposal
+                        </a>
+                        <a href="{{ url_for('proposal.drafts') }}" class="btn btn-secondary">
+                            <i class="fas fa-save"></i> Saved Drafts
+                        </a>
+                        <a href="{{ url_for('proposal.track') }}" class="btn btn-info">
+                            <i class="fas fa-search"></i> Track Proposal
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">My Proposals</h5>
+                    <h2 class="mb-0">{{ stats.total_proposals }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending</h5>
+                    <h2 class="mb-0">{{ stats.pending }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Approved</h5>
+                    <h2 class="mb-0">{{ stats.approved }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">In Progress</h5>
+                    <h2 class="mb-0">{{ stats.in_progress }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Proposals -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Recent Proposals</h5>
+                    <a href="{{ url_for('proposal.index') }}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>File No.</th>
+                                    <th>Title</th>
+                                    <th>Submitted Date</th>
+                                    <th>Current Stage</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for proposal in recent_proposals %}
+                                <tr>
+                                    <td>{{ proposal.file_number }}</td>
+                                    <td>{{ proposal.title }}</td>
+                                    <td>{{ proposal.submitted_at.strftime('%d-%m-%Y') }}</td>
+                                    <td>{{ proposal.current_stage }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ proposal.status_color }}">
+                                            {{ proposal.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('proposal.view', id=proposal.id) }}" 
+                                               class="btn btn-sm btn-primary">View</a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown"></button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('proposal.track', id=proposal.id) }}">
+                                                        <i class="fas fa-search"></i> Track
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('proposal.history', id=proposal.id) }}">
+                                                        <i class="fas fa-history"></i> History
+                                                    </a>
+                                                </li>
+                                                {% if proposal.can_edit %}
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('proposal.edit', id=proposal.id) }}">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </a>
+                                                </li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for notification in notifications %}
+                        <a href="{{ notification.link }}" 
+                           class="list-group-item list-group-item-action {{ 'active' if not notification.read }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ notification.title }}</h6>
+                                <small>{{ notification.created_at|timeago }}</small>
+                            </div>
+                            <p class="mb-1">{{ notification.message }}</p>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Pending Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for action in pending_actions %}
+                        <a href="{{ action.link }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ action.title }}</h6>
+                                <small class="text-danger">Due: {{ action.due_date|date }}</small>
+                            </div>
+                            <p class="mb-1">{{ action.description }}</p>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Refresh notifications every 2 minutes
+    setInterval(function() {
+        fetch('/api/notifications')
+            .then(response => response.json())
+            .then(data => {
+                // Update notification count
+                const count = data.filter(n => !n.read).length;
+                document.getElementById('notification-count').textContent = count;
+            });
+    }, 120000);
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Director General Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, Director General</h4>
+                    <p class="card-text">Department: Police Housing Corporation</p>
+                    <p class="card-text">Role: {{ current_user.role.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Decisions</h5>
+                    <h2>{{ stats.pending_decisions }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Projects Approved</h5>
+                    <h2>{{ stats.approved_projects }}</h2>
+                    <small>Value: ₹{{ stats.approved_value|numberformat }} Cr</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">High Priority</h5>
+                    <h2>{{ stats.high_priority }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Projects</h5>
+                    <h2>{{ stats.total_projects }}</h2>
+                    <small>Value: ₹{{ stats.total_value|numberformat }} Cr</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Decisions Queue -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Pending Decisions</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary active" data-filter="all">All</button>
+                        <button class="btn btn-sm btn-outline-danger" data-filter="urgent">Urgent</button>
+                        <button class="btn btn-sm btn-outline-warning" data-filter="high">High Value</button>
+                        <button class="btn btn-sm btn-outline-info" data-filter="normal">Normal</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="decisionsTable">
+                            <thead>
+                                <tr>
+                                    <th>File No.</th>
+                                    <th>Subject</th>
+                                    <th>Department</th>
+                                    <th>Value (₹)</th>
+                                    <th>Received Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for case in pending_decisions %}
+                                <tr data-priority="{{ case.priority }}" data-value="{{ case.value }}">
+                                    <td>{{ case.file_number }}</td>
+                                    <td>{{ case.subject }}</td>
+                                    <td>{{ case.department }}</td>
+                                    <td>₹{{ case.value|numberformat }}</td>
+                                    <td>{{ case.received_date|date }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ case.priority_color }}">
+                                            {{ case.priority }}
+                                        </span>
+                                    </td>
+                                    <td>{{ case.status }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('dg.review_case', id=case.id) }}" 
+                                               class="btn btn-sm btn-primary">Review</a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown"></button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('dg.approve', id=case.id) }}">
+                                                        <i class="fas fa-check-circle"></i> Approve
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('dg.return_with_remarks', id=case.id) }}">
+                                                        <i class="fas fa-comment"></i> Return with Remarks
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('dg.reject', id=case.id) }}">
+                                                        <i class="fas fa-times-circle"></i> Reject
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Overview and Recent Activities -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Project Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="projectChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Activities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ activity.title }}</h6>
+                                <small>{{ activity.timestamp|timeago }}</small>
+                            </div>
+                            <p class="mb-1">{{ activity.description }}</p>
+                            <small>Value: ₹{{ activity.value|numberformat }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Project overview chart
+    const ctx = document.getElementById('projectChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Approved', 'Pending', 'Under Review', 'Rejected'],
+            datasets: [{
+                data: [
+                    '{{ stats.approved_projects }}',
+                    '{{ stats.pending_decisions }}',
+                    '{{ stats.under_review }}',
+                    '{{ stats.rejected_projects }}'
+                ],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(23, 162, 184, 0.8)',
+                    'rgba(220, 53, 69, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Filter decisions
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            document.querySelectorAll('#decisionsTable tbody tr').forEach(row => {
+                if (filter === 'all' || 
+                    row.dataset.priority === filter || 
+                    (filter === 'high' && parseInt(row.dataset.value) > 10000000)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Refresh data every 5 minutes
+    setInterval(function() {
+        fetch('/api/dg/stats')
+            .then(response => response.json())
+            .then(data => {
+                Object.keys(data).forEach(key => {
+                    const element = document.querySelector(`[data-stat="${key}"]`);
+                    if (element) element.textContent = data[key];
+                });
+            });
+    }, 300000);
+
+    // Initialize DataTable
+    $(document).ready(function() {
+        $('#decisionsTable').DataTable({
+            pageLength: 10,
+            order: [[4, 'desc']], // Sort by received date
+            responsive: true
+        });
+    });
+</script>
+{% endblock %} 

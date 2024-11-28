@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-file-alt"></i> Proposal Details</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><i class="fas fa-hashtag"></i> <strong>File Number:</strong> {{ proposal.file_number }}</p>
+                    <p><i class="fas fa-heading"></i> <strong>Title:</strong> {{ proposal.title }}</p>
+                    <p><i class="fas fa-building"></i> <strong>Department:</strong> {{ proposal.department }}</p>
+                    <p><i class="fas fa-money-bill"></i> <strong>Estimated Cost:</strong> ₹{{ "%.2f"|format(proposal.estimated_cost) }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p>
+                        <i class="fas fa-info-circle"></i> <strong>Status:</strong> 
+                        <span class="badge bg-{{ 'success' if proposal.current_status == 'approved' 
+                                            else 'danger' if proposal.current_status == 'rejected'
+                                            else 'warning' }}">
+                            <i class="fas fa-{{ 'check' if proposal.current_status == 'approved' 
+                                           else 'times' if proposal.current_status == 'rejected'
+                                           else 'clock' }}"></i>
+                            {{ proposal.current_status }}
+                        </span>
+                    </p>
+                    <p>
+                        <i class="fas fa-exclamation-triangle"></i> <strong>Priority:</strong> 
+                        <span class="badge bg-{{ 'danger' if proposal.priority == 'urgent' 
+                                            else 'warning' if proposal.priority == 'high' 
+                                            else 'info' }}">
+                            {{ proposal.priority }}
+                        </span>
+                    </p>
+                    <p><i class="fas fa-map-marker-alt"></i> <strong>Current Location:</strong> {{ proposal.current_location }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0"><i class="fas fa-history"></i> Proposal Timeline</h4>
+        </div>
+        <div class="card-body">
+            <div class="timeline">
+                {% for entry in history %}
+                <div class="timeline-item">
+                    <div class="timeline-badge bg-{{ 'success' if entry.action == 'approved' 
+                                                else 'danger' if entry.action == 'rejected'
+                                                else 'primary' if entry.action == 'created'
+                                                else 'info' }}">
+                        <i class="fas fa-{{ 'check' if entry.action == 'approved'
+                                       else 'times' if entry.action == 'rejected'
+                                       else 'plus' if entry.action == 'created'
+                                       else 'arrow-right' }}"></i>
+                    </div>
+                    <div class="timeline-panel">
+                        <div class="timeline-heading">
+                            <h6 class="timeline-title">
+                                {{ entry.action.title() }}
+                                {% if entry.action == 'forwarded' %}
+                                    from {{ entry.from_role }} to {{ entry.to_role }}
+                                {% endif %}
+                            </h6>
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i>
+                                {{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                            </small>
+                        </div>
+                        {% if entry.comments %}
+                        <div class="timeline-body">
+                            <p class="mb-0">
+                                <i class="fas fa-comment"></i>
+                                {{ entry.comments }}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50px;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    position: absolute;
+    left: 31px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 1;
+}
+
+.timeline-badge i {
+    font-size: 1.2em;
+}
+
+.timeline-panel {
+    margin-left: 100px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.timeline-panel:before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 15px;
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid #fff;
+}
+
+.timeline-title {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.timeline-body {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e9ecef;
+}
+
+.timeline-body p {
+    color: #6c757d;
+}
+
+.card-header {
+    border-bottom: 0;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.badge {
+    padding: 0.5em 1em;
+}
+</style>
+{% endblock %} 

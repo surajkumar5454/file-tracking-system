@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}ADG Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, Additional Director General</h4>
+                    <p class="card-text">Department: Police Housing Corporation</p>
+                    <p class="card-text">Role: {{ current_user.role.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Approvals</h5>
+                    <h2>{{ stats.pending_approvals }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Approved Projects</h5>
+                    <h2>{{ stats.approved_projects }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Under Review</h5>
+                    <h2>{{ stats.under_review }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Value (Cr)</h5>
+                    <h2>₹{{ stats.total_value|numberformat }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Approvals -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Pending Approvals</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary active" data-filter="all">All</button>
+                        <button class="btn btn-sm btn-outline-danger" data-filter="urgent">Urgent</button>
+                        <button class="btn btn-sm btn-outline-warning" data-filter="high">High Priority</button>
+                        <button class="btn btn-sm btn-outline-info" data-filter="normal">Normal</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="approvalsTable">
+                            <thead>
+                                <tr>
+                                    <th>File No.</th>
+                                    <th>Project Title</th>
+                                    <th>Department</th>
+                                    <th>Estimated Cost</th>
+                                    <th>Received Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in pending_approvals %}
+                                <tr data-priority="{{ project.priority }}">
+                                    <td>{{ project.file_number }}</td>
+                                    <td>{{ project.title }}</td>
+                                    <td>{{ project.department }}</td>
+                                    <td>₹{{ project.estimated_cost|numberformat }}</td>
+                                    <td>{{ project.received_date|date }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ project.priority_color }}">
+                                            {{ project.priority }}
+                                        </span>
+                                    </td>
+                                    <td>{{ project.status }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('adg.review_project', id=project.id) }}" 
+                                               class="btn btn-sm btn-primary">Review</a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown"></button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('adg.approve_project', id=project.id) }}">
+                                                        <i class="fas fa-check-circle"></i> Approve
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('adg.request_changes', id=project.id) }}">
+                                                        <i class="fas fa-edit"></i> Request Changes
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('adg.forward_dg', id=project.id) }}">
+                                                        <i class="fas fa-forward"></i> Forward to DG
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Overview and Recent Activities -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Project Status Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="projectChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Activities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ activity.title }}</h6>
+                                <small>{{ activity.timestamp|timeago }}</small>
+                            </div>
+                            <p class="mb-1">{{ activity.description }}</p>
+                            <small>File: {{ activity.file_number }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Project status chart
+    const ctx = document.getElementById('projectChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Pending', 'Under Review', 'Approved', 'Returned'],
+            datasets: [{
+                data: [
+                    '{{ stats.pending_approvals }}',
+                    '{{ stats.under_review }}',
+                    '{{ stats.approved_projects }}',
+                    '{{ stats.returned_projects }}'
+                ],
+                backgroundColor: [
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(23, 162, 184, 0.8)',
+                    'rgba(40, 167, 69, 0.8)',
+                    'rgba(220, 53, 69, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Filter approvals
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            document.querySelectorAll('#approvalsTable tbody tr').forEach(row => {
+                if (filter === 'all' || row.dataset.priority === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Refresh data every 5 minutes
+    setInterval(function() {
+        fetch('/api/adg/stats')
+            .then(response => response.json())
+            .then(data => {
+                Object.keys(data).forEach(key => {
+                    const element = document.querySelector(`[data-stat="${key}"]`);
+                    if (element) element.textContent = data[key];
+                });
+            });
+    }, 300000);
+
+    // Initialize DataTable
+    $(document).ready(function() {
+        $('#approvalsTable').DataTable({
+            pageLength: 10,
+            order: [[4, 'desc']], // Sort by received date
+            responsive: true
+        });
+    });
+</script>
+{% endblock %} 

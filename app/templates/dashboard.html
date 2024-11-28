@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Welcome, {{ current_user.username }}</h2>
+            <p class="text-muted">Department: {{ current_user.department }}</p>
+        </div>
+    </div>
+
+    <!-- Direct Proposals Statistics -->
+    <h4 class="mb-3"><i class="fas fa-chart-pie me-2"></i>My Proposals</h4>
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total</h6>
+                            <h2 class="mt-2 mb-0">{{ direct_total }}</h2>
+                        </div>
+                        <i class="fas fa-folder fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Pending</h6>
+                            <h2 class="mt-2 mb-0">{{ direct_pending }}</h2>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Approved</h6>
+                            <h2 class="mt-2 mb-0">{{ direct_approved }}</h2>
+                        </div>
+                        <i class="fas fa-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Rejected</h6>
+                            <h2 class="mt-2 mb-0">{{ direct_rejected }}</h2>
+                        </div>
+                        <i class="fas fa-times fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Direct Proposals Table -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">My Proposals</h5>
+            <a href="{{ url_for('main.submit_proposal') }}" class="btn btn-primary">New Proposal</a>
+        </div>
+        <div class="card-body">
+            {% include 'dashboard/_proposals_table.html' with context %}
+        </div>
+    </div>
+
+    <!-- Subordinate Proposals Section -->
+    {% if subordinate_proposals %}
+    <h4 class="mb-3">Subordinate Proposals</h4>
+    
+    <!-- Subordinate Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total</h6>
+                            <h2 class="mt-2 mb-0">{{ subordinate_total }}</h2>
+                        </div>
+                        <i class="fas fa-folder fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Pending</h6>
+                            <h2 class="mt-2 mb-0">{{ subordinate_pending }}</h2>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Approved</h6>
+                            <h2 class="mt-2 mb-0">{{ subordinate_approved }}</h2>
+                        </div>
+                        <i class="fas fa-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Rejected</h6>
+                            <h2 class="mt-2 mb-0">{{ subordinate_rejected }}</h2>
+                        </div>
+                        <i class="fas fa-times fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role-wise Statistics Cards -->
+    <div class="row mb-4">
+        {% for role, counts in subordinate_counts.items() %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">{{ role_titles[role] }}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-3">
+                            <small class="text-muted">Total</small>
+                            <h5>{{ counts.total }}</h5>
+                        </div>
+                        <div class="col-3">
+                            <small class="text-muted">Pending</small>
+                            <h5>{{ counts.pending }}</h5>
+                        </div>
+                        <div class="col-3">
+                            <small class="text-muted">Approved</small>
+                            <h5>{{ counts.approved }}</h5>
+                        </div>
+                        <div class="col-3">
+                            <small class="text-muted">Rejected</small>
+                            <h5>{{ counts.rejected }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Subordinate Proposals Table with Filters -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Proposals at Subordinate Levels</h5>
+                <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#filterSection">
+                    <i class="fas fa-filter"></i> Filters
+                </button>
+            </div>
+        </div>
+        
+        <!-- Filter Section -->
+        <div class="collapse" id="filterSection">
+            <div class="card-body border-bottom">
+                <form id="filterForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All</option>
+                            <option value="pending_approval">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Role</label>
+                        <select class="form-select" id="roleFilter">
+                            <option value="">All</option>
+                            {% for role in subordinate_roles %}
+                            <option value="{{ role }}">{{ role_titles[role] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Priority</label>
+                        <select class="form-select" id="priorityFilter">
+                            <option value="">All</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="high">High</option>
+                            <option value="normal">Normal</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Department</label>
+                        <input type="text" class="form-control" id="departmentFilter" placeholder="Search...">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="subordinateTable">
+                    <thead>
+                        <tr>
+                            <th>File Number</th>
+                            <th>Title</th>
+                            <th>Department</th>
+                            <th>Estimated Cost</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Current Location</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proposal in subordinate_proposals %}
+                        <tr>
+                            <td>{{ proposal.file_number }}</td>
+                            <td>{{ proposal.title }}</td>
+                            <td>{{ proposal.department }}</td>
+                            <td>₹{{ "%.2f"|format(proposal.estimated_cost) }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if proposal.current_status == 'approved' 
+                                                    else 'danger' if proposal.current_status == 'rejected'
+                                                    else 'warning' }}">
+                                    {{ proposal.current_status }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'danger' if proposal.priority == 'urgent' 
+                                                    else 'warning' if proposal.priority == 'high' 
+                                                    else 'info' }}">
+                                    {{ proposal.priority }}
+                                </span>
+                            </td>
+                            <td>{{ proposal.current_location }}</td>
+                            <td>
+                                <a href="{{ url_for('main.track_file') }}?file_number={{ proposal.file_number }}" 
+                                   class="btn btn-sm btn-outline-secondary">Track</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Include modals for actions -->
+{% include 'dashboard/_action_modals.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get filter elements
+    const statusFilter = document.getElementById('statusFilter');
+    const roleFilter = document.getElementById('roleFilter');
+    const priorityFilter = document.getElementById('priorityFilter');
+    const departmentFilter = document.getElementById('departmentFilter');
+    const table = document.getElementById('subordinateTable');
+
+    function filterTable() {
+        const status = statusFilter.value.toLowerCase();
+        const role = roleFilter.value;
+        const priority = priorityFilter.value.toLowerCase();
+        const department = departmentFilter.value.toLowerCase();
+
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+        for (let row of rows) {
+            const statusCell = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
+            const roleCell = row.querySelector('td:nth-child(7)').textContent;
+            const priorityCell = row.querySelector('td:nth-child(6)').textContent.toLowerCase();
+            const departmentCell = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+
+            const statusMatch = !status || statusCell.includes(status);
+            const roleMatch = !role || roleCell === role;
+            const priorityMatch = !priority || priorityCell.includes(priority);
+            const departmentMatch = !department || departmentCell.includes(department);
+
+            row.style.display = 
+                statusMatch && roleMatch && priorityMatch && departmentMatch ? '' : 'none';
+        }
+    }
+
+    // Add event listeners to filters
+    statusFilter.addEventListener('change', filterTable);
+    roleFilter.addEventListener('change', filterTable);
+    priorityFilter.addEventListener('change', filterTable);
+    departmentFilter.addEventListener('input', filterTable);
+});
+</script>
+{% endblock %} 

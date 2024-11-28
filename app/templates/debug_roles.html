@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Debug Information</h2>
+    
+    <h3>Current User</h3>
+    <pre>{{ debug_info.current_user | tojson(indent=2) }}</pre>
+    
+    <h3>All Proposals</h3>
+    <pre>{{ debug_info.proposals | tojson(indent=2) }}</pre>
+    
+    <h3>All Users</h3>
+    <pre>{{ debug_info.users | tojson(indent=2) }}</pre>
+</div>
+{% endblock %} 

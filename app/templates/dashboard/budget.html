@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Budget Desk Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, Budget Officer</h4>
+                    <p class="card-text">Department: Finance Division</p>
+                    <p class="card-text">Role: {{ current_user.role.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Overview Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Budget</h5>
+                    <h2>₹{{ stats.total_budget|numberformat }}</h2>
+                    <small>FY {{ stats.financial_year }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Allocated</h5>
+                    <h2>₹{{ stats.allocated|numberformat }}</h2>
+                    <small>{{ stats.allocation_percentage }}% of total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Allocation</h5>
+                    <h2>₹{{ stats.pending_allocation|numberformat }}</h2>
+                    <small>{{ stats.pending_requests }} requests</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Available Balance</h5>
+                    <h2>₹{{ stats.available_balance|numberformat }}</h2>
+                    <small>{{ stats.balance_percentage }}% remaining</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Allocation Requests -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Pending Budget Requests</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary active" data-filter="all">All</button>
+                        <button class="btn btn-sm btn-outline-warning" data-filter="urgent">Urgent</button>
+                        <button class="btn btn-sm btn-outline-success" data-filter="normal">Normal</button>
+                        <button class="btn btn-sm btn-outline-info" data-filter="supplementary">Supplementary</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="budgetTable">
+                            <thead>
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Department</th>
+                                    <th>Purpose</th>
+                                    <th>Amount (₹)</th>
+                                    <th>Requested Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in budget_requests %}
+                                <tr data-type="{{ request.type }}" data-priority="{{ request.priority }}">
+                                    <td>{{ request.request_id }}</td>
+                                    <td>{{ request.department }}</td>
+                                    <td>{{ request.purpose }}</td>
+                                    <td>₹{{ request.amount|numberformat }}</td>
+                                    <td>{{ request.requested_date|date }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ request.priority_color }}">
+                                            {{ request.priority }}
+                                        </span>
+                                    </td>
+                                    <td>{{ request.status }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('budget.review', id=request.id) }}" 
+                                               class="btn btn-sm btn-primary">Review</a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown"></button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('budget.allocate', id=request.id) }}">
+                                                        <i class="fas fa-check-circle"></i> Allocate Budget
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('budget.request_details', id=request.id) }}">
+                                                        <i class="fas fa-info-circle"></i> View Details
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('budget.forward_ifa', id=request.id) }}">
+                                                        <i class="fas fa-forward"></i> Forward to IFA
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('budget.return_request', id=request.id) }}">
+                                                        <i class="fas fa-undo"></i> Return Request
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Analysis and Recent Activities -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Budget Utilization</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="budgetChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Activities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ activity.title }}</h6>
+                                <small>{{ activity.timestamp|timeago }}</small>
+                            </div>
+                            <p class="mb-1">{{ activity.description }}</p>
+                            <small>Amount: ₹{{ activity.amount|numberformat }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Budget utilization chart
+    const ctx = document.getElementById('budgetChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Allocated', 'Pending', 'Available'],
+            datasets: [{
+                data: [
+                    '{{ stats.allocated }}',
+                    '{{ stats.pending_allocation }}',
+                    '{{ stats.available_balance }}'
+                ],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(23, 162, 184, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Filter budget requests
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            document.querySelectorAll('#budgetTable tbody tr').forEach(row => {
+                if (filter === 'all' || 
+                    row.dataset.type === filter || 
+                    row.dataset.priority === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Refresh data every 5 minutes
+    setInterval(function() {
+        fetch('/api/budget/stats')
+            .then(response => response.json())
+            .then(data => {
+                Object.keys(data).forEach(key => {
+                    const element = document.querySelector(`[data-stat="${key}"]`);
+                    if (element) element.textContent = data[key];
+                });
+            });
+    }, 300000);
+
+    // Initialize DataTable
+    $(document).ready(function() {
+        $('#budgetTable').DataTable({
+            pageLength: 10,
+            order: [[4, 'desc']], // Sort by requested date
+            responsive: true
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Branch Diary Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, Branch Diary</h4>
+                    <p class="card-text">Department: Administration</p>
+                    <p class="card-text">Role: {{ current_user.role.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Today's DAK</h5>
+                    <h2>{{ stats.todays_dak }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Distribution</h5>
+                    <h2>{{ stats.pending_distribution }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Urgent Letters</h5>
+                    <h2>{{ stats.urgent_letters }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Files in Movement</h5>
+                    <h2>{{ stats.files_in_movement }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DAK Registration and Distribution -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Today's DAK Queue</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary active" data-filter="all">All</button>
+                        <button class="btn btn-sm btn-outline-warning" data-filter="urgent">Urgent</button>
+                        <button class="btn btn-sm btn-outline-info" data-filter="normal">Normal</button>
+                        <button class="btn btn-sm btn-outline-success" data-filter="distributed">Distributed</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="dakTable">
+                            <thead>
+                                <tr>
+                                    <th>Diary No.</th>
+                                    <th>Subject</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Receipt Time</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dak in todays_dak %}
+                                <tr data-status="{{ dak.status }}" data-priority="{{ dak.priority }}">
+                                    <td>{{ dak.diary_number }}</td>
+                                    <td>{{ dak.subject }}</td>
+                                    <td>{{ dak.from_office }}</td>
+                                    <td>{{ dak.to_office }}</td>
+                                    <td>{{ dak.receipt_time|time }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ dak.priority_color }}">
+                                            {{ dak.priority }}
+                                        </span>
+                                    </td>
+                                    <td>{{ dak.status }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('diary.process_dak', id=dak.id) }}" 
+                                               class="btn btn-sm btn-primary">Process</a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown"></button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('diary.scan_document', id=dak.id) }}">
+                                                        <i class="fas fa-scanner"></i> Scan Document
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('diary.mark_urgent', id=dak.id) }}">
+                                                        <i class="fas fa-exclamation-circle"></i> Mark Urgent
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('diary.distribute', id=dak.id) }}">
+                                                        <i class="fas fa-share-alt"></i> Distribute
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Movement and Recent Activities -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent File Movements</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for movement in file_movements %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ movement.file_number }}</h6>
+                                <small>{{ movement.timestamp|timeago }}</small>
+                            </div>
+                            <p class="mb-1">From: {{ movement.from_office }} → To: {{ movement.to_office }}</p>
+                            <small>Status: {{ movement.status }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Pending Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for action in pending_actions %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ action.title }}</h6>
+                                <small class="text-danger">{{ action.due_time|time }}</small>
+                            </div>
+                            <p class="mb-1">{{ action.description }}</p>
+                            <div class="mt-2">
+                                <a href="{{ action.action_url }}" class="btn btn-sm btn-outline-primary">
+                                    {{ action.action_text }}
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Filter DAK table
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            document.querySelectorAll('#dakTable tbody tr').forEach(row => {
+                if (filter === 'all' || 
+                    row.dataset.status === filter || 
+                    row.dataset.priority === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Refresh data every 2 minutes
+    setInterval(function() {
+        fetch('/api/diary/stats')
+            .then(response => response.json())
+            .then(data => {
+                Object.keys(data).forEach(key => {
+                    const element = document.querySelector(`[data-stat="${key}"]`);
+                    if (element) element.textContent = data[key];
+                });
+            });
+    }, 120000);
+
+    // Initialize DataTable
+    $(document).ready(function() {
+        $('#dakTable').DataTable({
+            pageLength: 15,
+            order: [[4, 'desc']], // Sort by receipt time
+            responsive: true
+        });
+    });
+</script>
+{% endblock %} 

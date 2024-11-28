@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Engineer Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, Executive Engineer</h4>
+                    <p class="card-text">Division: {{ current_user.division }}</p>
+                    <p class="card-text">Role: {{ current_user.role.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending DAK</h5>
+                    <h2>{{ stats.pending_dak }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Minor Works</h5>
+                    <h2>{{ stats.minor_works }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Under Review</h5>
+                    <h2>{{ stats.under_review }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Urgent Matters</h5>
+                    <h2>{{ stats.urgent_matters }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Works -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Pending Works</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary active" data-filter="all">All</button>
+                        <button class="btn btn-sm btn-outline-primary" data-filter="minor">Minor Works</button>
+                        <button class="btn btn-sm btn-outline-primary" data-filter="major">Major Works</button>
+                        <button class="btn btn-sm btn-outline-danger" data-filter="urgent">Urgent</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="worksTable">
+                            <thead>
+                                <tr>
+                                    <th>File No.</th>
+                                    <th>Project Title</th>
+                                    <th>Type</th>
+                                    <th>Estimated Cost</th>
+                                    <th>Received Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for work in pending_works %}
+                                <tr data-type="{{ work.type }}" data-priority="{{ work.priority }}">
+                                    <td>{{ work.file_number }}</td>
+                                    <td>{{ work.title }}</td>
+                                    <td>{{ work.type }}</td>
+                                    <td>₹{{ work.estimated_cost|numberformat }}</td>
+                                    <td>{{ work.received_date|date }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ work.priority_color }}">
+                                            {{ work.priority }}
+                                        </span>
+                                    </td>
+                                    <td>{{ work.status }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('works.review', id=work.id) }}" 
+                                               class="btn btn-sm btn-primary">Review</a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown"></button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('works.technical_review', id=work.id) }}">
+                                                        <i class="fas fa-tools"></i> Technical Review
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('works.cost_estimate', id=work.id) }}">
+                                                        <i class="fas fa-calculator"></i> Cost Estimate
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('works.site_inspection', id=work.id) }}">
+                                                        <i class="fas fa-map-marker-alt"></i> Site Inspection
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('works.forward_ac', id=work.id) }}">
+                                                        <i class="fas fa-forward"></i> Forward to AC
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('works.return_se', id=work.id) }}">
+                                                        <i class="fas fa-undo"></i> Return to SE
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Site Inspections and Technical Reviews -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Upcoming Site Inspections</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for inspection in site_inspections %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ inspection.location }}</h6>
+                                <small class="text-danger">{{ inspection.date|date }}</small>
+                            </div>
+                            <p class="mb-1">{{ inspection.description }}</p>
+                            <small>File: {{ inspection.file_number }}</small>
+                            <div class="mt-2">
+                                <a href="{{ url_for('works.inspection_details', id=inspection.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">View Details</a>
+                                <a href="{{ url_for('works.update_inspection', id=inspection.id) }}" 
+                                   class="btn btn-sm btn-outline-success">Update Status</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Technical Reviews</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for review in technical_reviews %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ review.title }}</h6>
+                                <small>{{ review.date|date }}</small>
+                            </div>
+                            <p class="mb-1">{{ review.summary }}</p>
+                            <small>Status: {{ review.status }}</small>
+                            <div class="mt-2">
+                                <a href="{{ url_for('works.review_details', id=review.id) }}" 
+                                   class="btn btn-sm btn-outline-info">View Full Review</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Filter works table
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            document.querySelectorAll('#worksTable tbody tr').forEach(row => {
+                if (filter === 'all' || 
+                    row.dataset.type === filter || 
+                    row.dataset.priority === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Refresh data every 5 minutes
+    setInterval(function() {
+        fetch('/api/ee/stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update statistics
+                Object.keys(data).forEach(key => {
+                    const element = document.querySelector(`[data-stat="${key}"]`);
+                    if (element) element.textContent = data[key];
+                });
+            });
+    }, 300000);
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Initialize DataTable for better sorting and searching
+    $(document).ready(function() {
+        $('#worksTable').DataTable({
+            pageLength: 10,
+            order: [[4, 'desc']], // Sort by received date by default
+            responsive: true
+        });
+    });
+</script>
+{% endblock %} 

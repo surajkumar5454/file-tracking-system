@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Track File{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Track File Status</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="mb-4">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="file_id" 
+                                   placeholder="Enter File ID" required>
+                            <button type="submit" class="btn btn-primary">Track</button>
+                        </div>
+                    </form>
+
+                    {% if search %}
+                        {% if proposal %}
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ proposal.title }}</h5>
+                                    <p class="card-text">
+                                        <strong>Status:</strong> 
+                                        <span class="badge bg-{{ 'success' if proposal.status == 'approved' 
+                                                            else 'danger' if proposal.status == 'rejected' 
+                                                            else 'warning' }}">
+                                            {{ proposal.status }}
+                                        </span>
+                                    </p>
+                                    <p class="card-text"><strong>Department:</strong> {{ proposal.department }}</p>
+                                    <p class="card-text"><strong>Submitted:</strong> 
+                                        {{ proposal.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                    
+                                    <!-- Timeline -->
+                                    <div class="mt-4">
+                                        <h6>File Movement Timeline</h6>
+                                        <div class="timeline">
+                                            <div class="timeline-item">
+                                                <div class="timeline-marker bg-success"></div>
+                                                <div class="timeline-content">
+                                                    <p class="timeline-date">
+                                                        {{ proposal.submitted_at.strftime('%Y-%m-%d %H:%M') }}
+                                                    </p>
+                                                    <p>File submitted</p>
+                                                </div>
+                                            </div>
+                                            <!-- Add more timeline items based on file movement -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                No file found with the provided ID.
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+        margin-left: 20px;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 30px;
+        margin-bottom: 20px;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -6px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .timeline-content {
+        padding: 10px;
+        border-left: 2px solid #dee2e6;
+    }
+
+    .timeline-date {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-bottom: 5px;
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Track File</h2>
+    
+    <form method="POST" class="mb-4">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" name="file_number" class="form-control" placeholder="Enter File Number" required>
+                    <button type="submit" class="btn btn-primary">Track</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    {% if proposal %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>File Details</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>File Number:</strong> {{ proposal.file_number }}</p>
+            <p><strong>Subject:</strong> {{ proposal.subject }}</p>
+            <p><strong>Current Status:</strong> {{ proposal.status }}</p>
+            <p><strong>Current Location:</strong> {{ proposal.current_location }}</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4>Movement History</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Action</th>
+                            <th>Comments</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for movement in movements %}
+                        <tr>
+                            <td>{{ movement.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ movement.from_department }}</td>
+                            <td>{{ movement.to_department }}</td>
+                            <td>{{ movement.action }}</td>
+                            <td>{{ movement.comments }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

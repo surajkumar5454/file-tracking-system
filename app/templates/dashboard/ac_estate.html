@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}AC Estate Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, AC Estate</h4>
+                    <p class="card-text">Department: Estate Division</p>
+                    <p class="card-text">Role: {{ current_user.role.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Estate Matters</h5>
+                    <h2>{{ stats.pending_estate }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Land Acquisitions</h5>
+                    <h2>{{ stats.land_acquisitions }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Property Disputes</h5>
+                    <h2>{{ stats.property_disputes }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Lease Renewals</h5>
+                    <h2>{{ stats.lease_renewals }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estate Matters Queue -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Estate Matters Queue</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary active" data-filter="all">All</button>
+                        <button class="btn btn-sm btn-outline-primary" data-filter="acquisition">Acquisitions</button>
+                        <button class="btn btn-sm btn-outline-primary" data-filter="dispute">Disputes</button>
+                        <button class="btn btn-sm btn-outline-primary" data-filter="lease">Leases</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="estateTable">
+                            <thead>
+                                <tr>
+                                    <th>File No.</th>
+                                    <th>Matter Type</th>
+                                    <th>Location</th>
+                                    <th>Area (Acres)</th>
+                                    <th>Received Date</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for matter in estate_matters %}
+                                <tr data-type="{{ matter.type }}">
+                                    <td>{{ matter.file_number }}</td>
+                                    <td>{{ matter.type }}</td>
+                                    <td>{{ matter.location }}</td>
+                                    <td>{{ matter.area }}</td>
+                                    <td>{{ matter.received_date|date }}</td>
+                                    <td>{{ matter.status }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ matter.priority_color }}">
+                                            {{ matter.priority }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('estate.review', id=matter.id) }}" 
+                                               class="btn btn-sm btn-primary">Review</a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown"></button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('estate.site_visit', id=matter.id) }}">
+                                                        <i class="fas fa-map-marker-alt"></i> Schedule Site Visit
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('estate.documents', id=matter.id) }}">
+                                                        <i class="fas fa-file"></i> View Documents
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('estate.forward', id=matter.id) }}">
+                                                        <i class="fas fa-forward"></i> Forward
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('estate.return', id=matter.id) }}">
+                                                        <i class="fas fa-undo"></i> Return
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Site Visits and Document Reviews -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Upcoming Site Visits</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for visit in site_visits %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ visit.location }}</h6>
+                                <small class="text-danger">{{ visit.date|date }}</small>
+                            </div>
+                            <p class="mb-1">{{ visit.purpose }}</p>
+                            <small>File: {{ visit.file_number }}</small>
+                            <div class="mt-2">
+                                <a href="{{ url_for('estate.visit_details', id=visit.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">View Details</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Activities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ activity.title }}</h6>
+                                <small>{{ activity.timestamp|timeago }}</small>
+                            </div>
+                            <p class="mb-1">{{ activity.description }}</p>
+                            <small>File: {{ activity.file_number }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Filter estate matters
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            document.querySelectorAll('#estateTable tbody tr').forEach(row => {
+                if (filter === 'all' || row.dataset.type === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Refresh data every 5 minutes
+    setInterval(function() {
+        fetch('/api/estate/stats')
+            .then(response => response.json())
+            .then(data => {
+                Object.keys(data).forEach(key => {
+                    const element = document.querySelector(`[data-stat="${key}"]`);
+                    if (element) element.textContent = data[key];
+                });
+            });
+    }, 300000);
+
+    // Initialize DataTable
+    $(document).ready(function() {
+        $('#estateTable').DataTable({
+            pageLength: 10,
+            order: [[4, 'desc']], // Sort by received date
+            responsive: true
+        });
+    });
+</script>
+{% endblock %} 

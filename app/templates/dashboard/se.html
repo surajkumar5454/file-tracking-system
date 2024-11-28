@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Superintending Engineer Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, Superintending Engineer</h4>
+                    <p class="card-text">Department: Engineering Division</p>
+                    <p class="card-text">Role: {{ current_user.role.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Technical Review</h5>
+                    <h2>{{ stats.pending_technical }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Forwarded to EE</h5>
+                    <h2>{{ stats.forwarded_to_ee }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Returned to DIG</h5>
+                    <h2>{{ stats.returned_to_dig }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">PUC Marked</h5>
+                    <h2>{{ stats.puc_marked }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Review Queue -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Technical Review Queue</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" data-filter="all">All</button>
+                        <button class="btn btn-sm btn-outline-primary" data-filter="urgent">Urgent</button>
+                        <button class="btn btn-sm btn-outline-primary" data-filter="normal">Normal</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>File No.</th>
+                                    <th>Project Title</th>
+                                    <th>Estimated Cost</th>
+                                    <th>Received From</th>
+                                    <th>Priority</th>
+                                    <th>Technical Aspects</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for proposal in technical_queue %}
+                                <tr data-priority="{{ proposal.priority }}">
+                                    <td>{{ proposal.file_number }}</td>
+                                    <td>{{ proposal.title }}</td>
+                                    <td>₹{{ proposal.estimated_cost|numberformat }}</td>
+                                    <td>{{ proposal.received_from }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ proposal.priority_color }}">
+                                            {{ proposal.priority }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#technicalModal{{ proposal.id }}">
+                                            View Details
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('proposal.technical_review', id=proposal.id) }}" 
+                                               class="btn btn-sm btn-primary">Review</a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown"></button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('proposal.mark_puc', id=proposal.id) }}">
+                                                        <i class="fas fa-check"></i> Mark PUC
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('proposal.forward_ee', id=proposal.id) }}">
+                                                        <i class="fas fa-forward"></i> Forward to EE
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('proposal.return_dig', id=proposal.id) }}">
+                                                        <i class="fas fa-undo"></i> Return to DIG
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="{{ url_for('proposal.add_note', id=proposal.id) }}">
+                                                        <i class="fas fa-sticky-note"></i> Add Note
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Technical Details Modal -->
+                                <div class="modal fade" id="technicalModal{{ proposal.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Technical Details - {{ proposal.file_number }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <h6>Specifications:</h6>
+                                                    <p>{{ proposal.technical_specs|safe }}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <h6>Drawings:</h6>
+                                                    <div class="row">
+                                                        {% for drawing in proposal.drawings %}
+                                                        <div class="col-md-4">
+                                                            <a href="{{ drawing.url }}" target="_blank" 
+                                                               class="btn btn-outline-secondary w-100 mb-2">
+                                                                <i class="fas fa-file-pdf"></i> {{ drawing.name }}
+                                                            </a>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <h6>Previous Technical Notes:</h6>
+                                                    <div class="list-group">
+                                                        {% for note in proposal.technical_notes %}
+                                                        <div class="list-group-item">
+                                                            <div class="d-flex w-100 justify-content-between">
+                                                                <h6 class="mb-1">{{ note.author }}</h6>
+                                                                <small>{{ note.date|date }}</small>
+                                                            </div>
+                                                            <p class="mb-1">{{ note.content }}</p>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities and Notifications -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Activities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ activity.action }}</h6>
+                                <small>{{ activity.timestamp|timeago }}</small>
+                            </div>
+                            <p class="mb-1">{{ activity.description }}</p>
+                            <small>File: {{ activity.file_number }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Important Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for notification in notifications %}
+                        <div class="list-group-item {{ 'list-group-item-warning' if notification.urgent }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ notification.title }}</h6>
+                                <small>{{ notification.date|date }}</small>
+                            </div>
+                            <p class="mb-1">{{ notification.message }}</p>
+                            {% if notification.action_required %}
+                            <div class="mt-2">
+                                <a href="{{ notification.action_url }}" class="btn btn-sm btn-primary">
+                                    {{ notification.action_text }}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Filter technical queue
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            document.querySelectorAll('tr[data-priority]').forEach(row => {
+                if (filter === 'all' || row.dataset.priority === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Refresh data every 5 minutes
+    setInterval(function() {
+        fetch('/api/se/stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update statistics
+                Object.keys(data).forEach(key => {
+                    const element = document.querySelector(`[data-stat="${key}"]`);
+                    if (element) element.textContent = data[key];
+                });
+            });
+    }, 300000);
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+</script>
+{% endblock %} 

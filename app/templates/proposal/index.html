@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}My Proposals{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Proposals</h2>
+        <a href="{{ url_for('proposal.new_proposal') }}" class="btn btn-primary">New Proposal</a>
+    </div>
+
+    {% if proposals %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proposal in proposals %}
+                    <tr>
+                        <td>{{ proposal.subject }}</td>
+                        <td>{{ proposal.department }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if proposal.status == 'approved' 
+                                                else 'danger' if proposal.status == 'rejected' 
+                                                else 'warning' }}">
+                                {{ proposal.status }}
+                            </span>
+                        </td>
+                        <td>{{ proposal.submitted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-outline-primary">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No proposals submitted yet.
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 
