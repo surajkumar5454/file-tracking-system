@@ -137,39 +137,6 @@
         </div>
     </div>
 
-    <!-- Role-wise Statistics Cards -->
-    <div class="row mb-4">
-        {% for role, counts in subordinate_counts.items() %}
-        <div class="col-md-4 mb-3">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">{{ role_titles[role] }}</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-3">
-                            <small class="text-muted">Total</small>
-                            <h5>{{ counts.total }}</h5>
-                        </div>
-                        <div class="col-3">
-                            <small class="text-muted">Pending</small>
-                            <h5>{{ counts.pending }}</h5>
-                        </div>
-                        <div class="col-3">
-                            <small class="text-muted">Approved</small>
-                            <h5>{{ counts.approved }}</h5>
-                        </div>
-                        <div class="col-3">
-                            <small class="text-muted">Rejected</small>
-                            <h5>{{ counts.rejected }}</h5>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
     <!-- Subordinate Proposals Table with Filters -->
     <div class="card">
         <div class="card-header">
@@ -259,8 +226,10 @@
                             </td>
                             <td>{{ proposal.current_location }}</td>
                             <td>
-                                <a href="{{ url_for('main.track_file') }}?file_number={{ proposal.file_number }}" 
-                                   class="btn btn-sm btn-outline-secondary">Track</a>
+                                <a href="{{ url_for('main.track_file', file_number=proposal.file_number) }}" 
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-history"></i> Track
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}

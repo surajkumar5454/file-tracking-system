@@ -110,13 +110,18 @@ def dashboard():
                          available_roles=available_roles,
                          role_titles=role_titles)
 
-@main_bp.route('/track_file')
+@main_bp.route('/track_file', methods=['GET', 'POST'])
 @login_required
 def track_file():
+    # Check for file number in URL parameters first
     file_number = request.args.get('file_number')
     
+    # If not in URL, check if it's a POST request with form data
+    if not file_number and request.method == 'POST':
+        file_number = request.form.get('file_number')
+    
+    # If we have a file number from either source, process it
     if file_number:
-        # Directly fetch the proposal and its history
         proposal = Proposal.query.filter_by(file_number=file_number).first()
         
         if proposal:
@@ -125,13 +130,13 @@ def track_file():
             ).order_by(ProposalHistory.timestamp.desc()).all()
             
             return render_template('proposal/track_result.html', 
-                                 proposal=proposal, 
-                                 history=history)
+                                proposal=proposal, 
+                                history=history)
         else:
             flash('Proposal not found.', 'danger')
-            return redirect(url_for('main.dashboard'))
+            return redirect(url_for('main.track_file'))
     
-    # If no file number provided, show the search form
+    # If no file number provided at all, show the search form
     return render_template('proposal/track.html')
 
 @main_bp.route('/submit_proposal', methods=['GET', 'POST'])
